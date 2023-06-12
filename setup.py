@@ -43,7 +43,8 @@ setuptools.setup(
     install_requires=[
         "django",
         "xhtml2pdf",
-        "reportlab"
+        "reportlab",
+        "boto3"
     ],
     extras_require={
         'test': (

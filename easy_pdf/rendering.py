@@ -8,6 +8,8 @@ from django.http import HttpResponse
 from django.template import loader
 from django.utils.html import smart_urlquote
 from xhtml2pdf import pisa
+from boto3 import resource as resource
+from botocore.exceptions import ClientError
 
 from .exceptions import PDFRenderingError, UnsupportedMediaPathException
 
@@ -33,7 +35,14 @@ def fetch_resources(uri, rel):
     else:
         path = os.path.join(settings.STATIC_ROOT, uri)
 
-    if not os.path.isfile(path):
+    if ".s3.amazonaws.com" in path:
+        s3 = resource('s3')
+        bucket, file = path.split(".s3.amazonaws.com/")
+        try:
+            s3.Object(bucket.strip("https://"), file).load()
+        except ClientError:
+            raise FileNotFoundError("File not found on S3")
+    elif not os.path.isfile(path):
         raise UnsupportedMediaPathException(
             "media urls must start with {} or {}".format(
                 settings.MEDIA_ROOT, settings.STATIC_ROOT
